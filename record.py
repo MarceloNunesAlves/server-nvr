@@ -5,6 +5,7 @@ import time
 import os
 import signal
 import argparse
+import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--user", type=str, default="user",
@@ -24,7 +25,26 @@ def return_filename():
     fl = fl.replace(':', '_')
     return fl
 
-def run_camera(ip, name):
+def send_to_analysis(path, location, start_hour_email, end_hour_email):
+
+    # Serviço de detecção de pessoa no video
+    url = "http://localhost:5001/"
+
+    payload = {
+        "path_video": path,
+        "location": location,
+        "hour_start_email": start_hour_email,
+        "hour_end_email": end_hour_email
+    }
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code == 200:
+        print("Requisição realizada com sucesso.")
+    else:
+        print("Ocorreu um erro ao realizar a requisição.")
+
+def run_camera(ip, name, start_hour_email, end_hour_email):
     global common
 
     end = 'rtsp://{}:{}@{}:554/live/ch01_0'.format(args.user, args.password, ip)
@@ -54,6 +74,9 @@ def run_camera(ip, name):
         time.sleep(1)
         os.kill(proc.pid, signal.SIGTERM)
 
+        #Envia para analise
+        send_to_analysis(outfile, name, start_hour_email, end_hour_email)
+
         print('Elapsed %1.2f' % (time.time() - st))
 
 if __name__ == "__main__":
@@ -62,5 +85,13 @@ if __name__ == "__main__":
     # Criando o poll de threads para a execução
     executor = ThreadPoolExecutor()
 
+    start_hour_email = None
+    end_hour_email = None
     for row in df.to_numpy(dtype=object):
-        executor.submit(run_camera, row[0], row[1])
+        try:
+            start_hour_email = int(row[2])
+            end_hour_email = int(row[3])
+        except:
+            pass # Hora de email não configurado
+
+        executor.submit(run_camera, row[0], row[1], start_hour_email, end_hour_email)
