@@ -18,6 +18,8 @@ args = parser.parse_args()
 
 common =' -4 -B 10000000 -b 10000000 -f 20 -w 1920 -h 1080 -t -V'
 
+url_analisys = os.getenv("URL_SERVER_ANALISYS_VIDEO", "http://localhost:5001/")
+
 def return_filename():
     # Creates a filename with the start time
     # of recording in its name
@@ -26,23 +28,25 @@ def return_filename():
     return fl
 
 def send_to_analysis(path, location, start_hour_email, end_hour_email):
+    try:
+        # Serviço de detecção de pessoa no video
+        url = url_analisys
 
-    # Serviço de detecção de pessoa no video
-    url = "http://localhost:5001/"
+        payload = {
+            "path_video": path,
+            "location": location,
+            "hour_start_email": start_hour_email,
+            "hour_end_email": end_hour_email
+        }
 
-    payload = {
-        "path_video": path,
-        "location": location,
-        "hour_start_email": start_hour_email,
-        "hour_end_email": end_hour_email
-    }
+        response = requests.post(url, json=payload)
 
-    response = requests.post(url, json=payload)
-
-    if response.status_code == 200:
-        print("Requisição realizada com sucesso.")
-    else:
-        print("Ocorreu um erro ao realizar a requisição.")
+        if response.status_code == 200:
+            print("Requisição realizada com sucesso.")
+        else:
+            print("Ocorreu um erro ao realizar a requisição.")
+    except:
+        print("Erro no envio ao serviço de analise de imagem")
 
 def run_camera(ip, name, start_hour_email, end_hour_email):
     global common
