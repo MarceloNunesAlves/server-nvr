@@ -49,3 +49,12 @@ conda create -n nvr
 conda activate nvr
 conda install python==3.8.0
 ```
+
+Arquivo de exemplo do CSV
+
+```
+ip;name
+192.168.0.12;Atras
+192.168.0.13;Frente
+192.168.0.14;Lado
+```
