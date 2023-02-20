@@ -7,6 +7,8 @@ import signal
 import argparse
 import requests
 
+PATH_CAMERA = os.getenv("PATH_CAMERA", "cameras.csv")
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--user", type=str, default="user",
                     help="Usuario de login das cameras")
@@ -84,7 +86,7 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
         print('Elapsed %1.2f' % (time.time() - st))
 
 if __name__ == "__main__":
-    df = pd.read_csv("cameras.csv", sep=";")
+    df = pd.read_csv(PATH_CAMERAS, sep=";")
 
     # Criando o poll de threads para a execução
     executor = ThreadPoolExecutor()
