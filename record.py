@@ -86,7 +86,7 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
         print('Elapsed %1.2f' % (time.time() - st))
 
 if __name__ == "__main__":
-    df = pd.read_csv(PATH_CAMERAS, sep=";")
+    df = pd.read_csv(PATH_CAMERA, sep=";")
 
     # Criando o poll de threads para a execução
     executor = ThreadPoolExecutor()
