@@ -8,6 +8,7 @@ import argparse
 import requests
 
 PATH_CAMERA = os.getenv("PATH_CAMERA", "cameras.csv")
+PATH_DEST_CAMERA = os.getenv("PATH_DEST_CAMERA", "./gravacoes")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--user", type=str, default="user",
