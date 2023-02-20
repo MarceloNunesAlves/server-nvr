@@ -58,7 +58,7 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
 
     common = common + ' -d %d ' % args.record_period
     # Create the output directory
-    outdir = './gravacoes/%s/' % name
+    outdir = PATH_DEST_CAMERA + ('/%s/' % name)
     os.system('mkdir -p %s' % outdir)
 
     while True:
