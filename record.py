@@ -30,8 +30,10 @@ def return_filename():
     fl = fl.replace(':', '_')
     return fl
 
-def send_to_analysis(path, location, start_hour_email, end_hour_email):
+def send_to_analysis(path_relative, location, start_hour_email, end_hour_email):
     try:
+        path = os.path.abspath(path_relative)
+
         # Serviço de detecção de pessoa no video
         url = url_analisys
 
