@@ -22,6 +22,7 @@ parser.add_argument("--record-period", type=int, default=600,
 args = parser.parse_args()
 
 url_analisys = os.getenv("URL_SERVER_ANALISYS_VIDEO", "http://localhost:5001/")
+fps_video = int(os.getenv("FPS_VIDEO", "1"))
 
 def return_filename():
     # Creates a filename with the start time
@@ -67,8 +68,8 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
         frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        # Define o intervalo em que o vídeo será salvo (25 fps * 5 minutos * 60 segundos)
-        time_interval = 10 * 5 * 60  # 5 minutos
+        # Define o intervalo em que o vídeo será salvo (fps * 5 minutos * 60 segundos)
+        time_interval = fps_video * 5 * 60  # 5 minutos
 
         # Inicializa o contador de frames e o timer
         frame_count = 0
@@ -95,7 +96,7 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
                 # Verifica se o intervalo de tempo foi atingido
                 time_count += 1
 
-                time.sleep(0.1)
+                time.sleep(1 / fps_video)
                 if time_count == time_interval:
                     # Salva o vídeo parcial e reinicializa o contador de tempo
                     out.release()
