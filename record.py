@@ -101,7 +101,7 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
                     out.release()
 
                     # Envia para analise
-                    #send_to_analysis(outfile, name, start_hour_email, end_hour_email)
+                    send_to_analysis(outfile, name, start_hour_email, end_hour_email)
 
                     print('Tempo da geração do video: %1.2f' % (time.time() - st))
 
