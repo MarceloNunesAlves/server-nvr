@@ -127,12 +127,11 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
 
                 time.sleep(1 / frame_rate)
                 if time_count == time_interval:
+                    # Salva o vídeo parcial e reinicializa o contador de tempo
+                    out.release()
+
                     # Apenas se houve movimentação no video
                     if has_movement:
-
-                        # Salva o vídeo parcial e reinicializa o contador de tempo
-                        out.release()
-
                         # Envia para analise
                         send_to_analysis(outfile, name, start_hour_email, end_hour_email)
 
