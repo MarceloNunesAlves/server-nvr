@@ -31,6 +31,30 @@ def return_filename():
     fl = fl.replace(':', '_')
     return fl
 
+def detector_movement(has_movement, background, frame):
+    # Converte o frame para escala de cinza e aplica um filtro Gaussiano
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+    if background is not None:
+        # Subtrai o background do frame atual
+        diff = cv2.absdiff(background, gray)
+        thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+
+        # Aplica operações morfológicas para remover ruído
+        thresh = cv2.dilate(thresh, None, iterations=2)
+        thresh = cv2.erode(thresh, None, iterations=2)
+
+        # Encontra os contornos dos objetos em movimento
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if len(contours) > 0:
+            # Se possuir contornos houve movimento no frame original
+            has_movement = True
+
+    return has_movement, background
+
+
 def send_to_analysis(path_relative, location, start_hour_email, end_hour_email):
     try:
         path = os.path.abspath(path_relative)
@@ -74,6 +98,10 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
         frame_count = 0
         time_count = 0
 
+        # Inicialização das flags de movimentação no video
+        has_movement = False
+        background = None
+
         filename = return_filename()
         outfile = './%s/%s.mp4' % (outdir, filename)
 
@@ -92,18 +120,23 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
                 out.write(frame)
                 frame_count += 1
 
+                has_movement, background = detector_movement(has_movement, background, frame)
+
                 # Verifica se o intervalo de tempo foi atingido
                 time_count += 1
 
                 time.sleep(1 / frame_rate)
                 if time_count == time_interval:
-                    # Salva o vídeo parcial e reinicializa o contador de tempo
-                    out.release()
+                    # Apenas se houve movimentação no video
+                    if has_movement:
 
-                    # Envia para analise
-                    send_to_analysis(outfile, name, start_hour_email, end_hour_email)
+                        # Salva o vídeo parcial e reinicializa o contador de tempo
+                        out.release()
 
-                    print('Tempo da geração do video: %1.2f' % (time.time() - st))
+                        # Envia para analise
+                        send_to_analysis(outfile, name, start_hour_email, end_hour_email)
+
+                        print('Tempo da geração do video: %1.2f' % (time.time() - st))
 
                     filename = return_filename()
                     outfile = './%s/%s.mp4' % (outdir, filename)
@@ -112,6 +145,10 @@ def run_camera(ip, name, start_hour_email, end_hour_email):
                     out = cv2.VideoWriter(outfile, fourcc, frame_rate,
                                           (frame_width, frame_height))
                     time_count = 0
+
+                    # Inicialização das flags de movimentação no video
+                    has_movement = False
+                    background = None
 
                     st = time.time()
             else:
