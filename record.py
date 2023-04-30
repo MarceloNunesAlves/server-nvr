@@ -69,7 +69,7 @@ def detector_movement(has_movement, background, frame):
                     if area < 200:
                         continue
 
-                    print("Tamanho da imagem {}".format(area))
+                    # print("Tamanho da imagem {}".format(area))
                     # x, y, w, h = cv2.boundingRect(c)
                     # cv2.rectangle(background, (x, y), (x + w, y + h), (36, 255, 12), 2)
                     # cv2.rectangle(gray, (x, y), (x + w, y + h), (36, 255, 12), 2)
