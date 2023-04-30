@@ -1,9 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
-import subprocess
 import time
 import os
-import signal
+import numpy as np
 import argparse
 import requests
 import cv2
@@ -33,27 +32,73 @@ def return_filename():
 
 def detector_movement(has_movement, background, frame):
     # Converte o frame para escala de cinza e aplica um filtro Gaussiano
+    height, width, channels = frame.shape
+    x = 50
+    y = 50
+    height = height - (x * 2)
+    width = width - (y * 2)
+    frame = frame[y:y + height, x:x + width]
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+    gray = cv2.GaussianBlur(src=gray, ksize=(5, 5), sigmaX=0)
 
-    if background is not None:
+    try:
+        if background is not None:
+            # Subtrai o background do frame atual
+            diff = cv2.absdiff(background, gray)
+
+            # 4. Dilute the image a bit to make differences more seeable; more suitable for contour detection
+            # Aplica operações morfológicas para remover ruído
+            kernel = np.ones((5, 5))
+            diff = cv2.dilate(diff, kernel, 1)
+
+            # 5. Only take different areas that are different enough (>20 / 255)
+            thresh_frame = cv2.threshold(src=diff, thresh=20, maxval=255, type=cv2.THRESH_BINARY)[1]
+
+            # Encontra os contornos dos objetos em movimento
+            contours, _ = cv2.findContours(image=thresh_frame, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
+
+            # mask = np.zeros(background.shape, dtype='uint8')
+            # filled_after = gray.copy()
+
+            if len(contours) > 0:
+                count_diff_shape = 0
+                for c in contours:
+                    area = cv2.contourArea(c)
+                    # print("Tamanho da imagem {}".format(area))
+                    if area < 200:
+                        continue
+
+                    print("Tamanho da imagem {}".format(area))
+                    # x, y, w, h = cv2.boundingRect(c)
+                    # cv2.rectangle(background, (x, y), (x + w, y + h), (36, 255, 12), 2)
+                    # cv2.rectangle(gray, (x, y), (x + w, y + h), (36, 255, 12), 2)
+                    # cv2.drawContours(mask, [c], 0, (255, 255, 255), -1)
+                    # cv2.drawContours(filled_after, [c], 0, (0, 255, 0), -1)
+
+                    count_diff_shape += 1
+
+                if count_diff_shape > 4:
+                    # cv2.imshow('before', background)
+                    # cv2.imshow('after', gray)
+                    # cv2.imshow('diff', diff)
+                    # cv2.imshow('mask', mask)
+                    # cv2.imshow('filled after', filled_after)
+                    # cv2.waitKey()
+
+                    # Se possuir contornos houve movimento no frame original
+                    has_movement = True
+                    # print("Tem movimento")
+            else:
+                pass
+                # print("Não")
+
         # Subtrai o background do frame atual
-        diff = cv2.absdiff(background, gray)
-        thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
-
-        # Aplica operações morfológicas para remover ruído
-        thresh = cv2.dilate(thresh, None, iterations=2)
-        thresh = cv2.erode(thresh, None, iterations=2)
-
-        # Encontra os contornos dos objetos em movimento
-        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        if len(contours) > 0:
-            # Se possuir contornos houve movimento no frame original
-            has_movement = True
+        background = gray
+    except:
+        print("Erro ao processar a imagem.")
 
     return has_movement, background
-
 
 def send_to_analysis(path_relative, location, start_hour_email, end_hour_email):
     try:
@@ -80,7 +125,9 @@ def send_to_analysis(path_relative, location, start_hour_email, end_hour_email):
 
 def run_camera(ip, name, start_hour_email, end_hour_email):
     try:
-        end = 'rtsp://{}:{}@{}:554/live/ch01_0'.format(args.user, args.password, ip)
+        # ch00_0 - canal fullHD
+        # ch01_0 - canal Half resolution
+        end = 'rtsp://{}:{}@{}:554/live/ch00_0'.format(args.user, args.password, ip)
         cap = cv2.VideoCapture(end)
 
         # Create the output directory
